@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Pemesanan LKS - Persada Ilmu</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    td, th { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    .mapel { background: #f0f0f0; font-weight: bold; }
+    button { margin-top: 20px; padding: 10px 20px; }
+  </style>
+</head>
+<body>
+  <h2>Form Pemesanan LKS - Persada Ilmu</h2>
+  <form id="orderForm">
+    <label>Nama Sekolah: <input type="text" name="nama_sekolah"></label>
+    <label>Kecamatan: <input type="text" name="kecamatan"></label>
+    <label>Nama Sales: <input type="text" name="nama_sales"></label>
+    <label>Nama Pengorder: <input type="text" name="nama_pengorder"></label>
+    <label>No WA Pengorder: <input type="text" name="wa_pengorder"></label>
+    <label>Tanggal Order: <input type="date" name="tanggal_order"></label>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Mata Pelajaran</th>
+          <th>Kelas 1</th>
+          <th>Kelas 2</th>
+          <th>Kelas 3</th>
+          <th>Kelas 4</th>
+          <th>Kelas 5</th>
+          <th>Kelas 6</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
+
+    <button type="button" onclick="downloadExcel()">Export ke Excel</button>
+  </form>
+
+  <script>
+    const mapelKelas = {
+      "Bahasa Indonesia": [1,2,3,4,5,6],
+      "Bahasa Inggris": [1,2,3,4,5,6],
+      "Matematika": [1,2,3,4,5,6],
+      "Pendidikan Pancasila": [1,2,3,4,5,6],
+      "Pendidikan Agama Islam": [1,2,3,4,5,6],
+      "Seni Musik": [1,2,3,4,5,6],
+      "Seni Rupa": [1,2,3,4,5,6],
+      "PJOK": [1,2,3,4,5,6],
+      "IPAS": [3,4,5,6]
+    };
+
+    const tbody = document.getElementById("orderTable");
+    for (const [mapel, kelasArr] of Object.entries(mapelKelas)) {
+      const tr = document.createElement("tr");
+      const tdMapel = document.createElement("td");
+      tdMapel.textContent = mapel;
+      tdMapel.className = "mapel";
+      tr.appendChild(tdMapel);
+      for (let i = 1; i <= 6; i++) {
+        const td = document.createElement("td");
+        if (kelasArr.includes(i)) {
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "0";
+          input.name = `${mapel}_kelas_${i}`;
+          td.appendChild(input);
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+
+    function downloadExcel() {
+      const form = document.getElementById("orderForm");
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => { data[key] = value });
+
+      const headers = ["Mata Pelajaran", "Kelas 1", "Kelas 2", "Kelas 3", "Kelas 4", "Kelas 5", "Kelas 6"];
+      const rows = [headers];
+
+      for (const [mapel, kelasArr] of Object.entries(mapelKelas)) {
+        const row = [mapel];
+        for (let i = 1; i <= 6; i++) {
+          row.push(kelasArr.includes(i) ? (data[`${mapel}_kelas_${i}`] || "0") : "");
+        }
+        rows.push(row);
+      }
+
+      const infoRow = [
+        ["Nama Sekolah", data.nama_sekolah],
+        ["Kecamatan", data.kecamatan],
+        ["Nama Sales", data.nama_sales],
+        ["Nama Pengorder", data.nama_pengorder],
+        ["No WA Pengorder", data.wa_pengorder],
+        ["Tanggal Order", data.tanggal_order]
+      ];
+
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.aoa_to_sheet(infoRow);
+      XLSX.utils.book_append_sheet(wb, ws1, "Info Sekolah");
+
+      const ws2 = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws2, "Pesanan LKS");
+
+      XLSX.writeFile(wb, `Pesanan_LKS_${data.nama_sekolah || "Sekolah"}.xlsx`);
+    }
+  </script>
+</body>
+</html>
